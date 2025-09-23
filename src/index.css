@@ -1,1 +1,6 @@
 /* Définit le style générale de l'application */
+
+#logo {
+  max-width: 40vw;
+  max-height: 40vw;
+}
