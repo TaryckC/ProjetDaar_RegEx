@@ -70,8 +70,6 @@ public static void main(String[] args) {
             System.out.println("  >> NFA built: start=" + nfa.start.id + ", accept=" + nfa.accept.id);
 
             // 4. Debug transitions du start
-           
-            
             System.out.println("  >> Start transitions: "
                 + nfa.start.transitions.size() + " symbol(s), "
                 + nfa.start.epsilonTransitions.size() + " epsilon(s).");
@@ -82,7 +80,7 @@ public static void main(String[] args) {
 
               printNFA(nfa);
 
-                          // 5. Construire le DFA
+              // 5. Construire le DFA
               DFA dfa = determinize(nfa);
 
               // 6. Afficher le DFA pour debug
@@ -103,11 +101,21 @@ public static void main(String[] args) {
                   }
               }
 
+              System.out.println("######### Nouveaux print du DFA");
+              dfa.printDFA();
+
+              System.out.println("######### Nouveaux print du DFA minimisé");
+              DFA minimizedDFA = DFA.updateDFA(dfa);
+              minimizedDFA.printDFA();
+
+
         } catch (Exception e) {
             System.err.println("  >> ERROR: syntax error for regEx \"" + regEx + "\".");
             e.printStackTrace();
         }
     }
+
+
 
     System.out.println("  >> ...");
     System.out.println("  >> Parsing completed.");
@@ -448,13 +456,13 @@ public static void printNFA(NFA nfa) {
 
             // relier la transition
             dfa.trans.get(curr).put(c, target);
+            dfa.alphabet.add(c);
         }
     }
 
     return dfa;
 
   }
-
 
 }
 
