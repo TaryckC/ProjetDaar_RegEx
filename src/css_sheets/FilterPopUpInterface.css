@@ -1,0 +1,8 @@
+.filter-popup-interface {
+    background-color: antiquewhite;
+    border-radius: 16px;
+    border-color: black;
+    border-width: 2px;
+    display: flex;
+    flex-direction: column;
+}
