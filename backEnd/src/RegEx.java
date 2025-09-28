@@ -1,8 +1,6 @@
-import java.util.Scanner;
-import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -11,9 +9,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.lang.Exception;
-import java.security.KeyStore.Entry;
-import java.text.Collator;
+import java.util.Scanner;
+import java.util.Set;
 
 public class RegEx {
   //MACROS
@@ -35,92 +32,143 @@ public class RegEx {
 
   //MAIN
 public static void main(String[] args) {
-    System.out.println("Welcome to Bogota, Mr. Thomas Anderson.");
-
-    // 1. Lire l'expression régulière
-    if (args.length != 0) {
-        regEx = args[0];
-    } else {
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("  >> Please enter a regEx: ");
-        regEx = scanner.next();
-        scanner.close();
+    if (args.length > 0 && "--tests".equals(args[0])) {
+        runTests();
+        return;
     }
 
-    System.out.println("  >> Parsing regEx \"" + regEx + "\".");
-    System.out.println("  >> ...");
-
-    if (regEx.length() < 1) {
-        System.err.println("  >> ERROR: empty regEx.");
-    } else {
-        // Pour debug : afficher les codes ASCII
-        System.out.print("  >> ASCII codes: [" + (int) regEx.charAt(0));
-        for (int i = 1; i < regEx.length(); i++) {
-            System.out.print("," + (int) regEx.charAt(i));
+    try (Scanner scanner = new Scanner(System.in)) {
+        // 1. Lire l'expression régulière
+        if (args.length != 0) {
+            regEx = args[0];
+        } else {
+            regEx = scanner.next();
+            scanner.nextLine(); // consume trailing newline
         }
-        System.out.println("].");
 
-        try {
-            // 2. Parser
-            RegExTree ret = parse();
-            System.out.println("  >> Tree result: " + ret.toString() + ".");
+        if (regEx.length() < 1) {
+        } else {
+            try {
+                // 1. Parser
+                RegExTree ret = parse();
 
-            // 3. Construire l'automate NFA
-            NFA nfa = toNFA(ret);
-            System.out.println("  >> NFA built: start=" + nfa.start.id + ", accept=" + nfa.accept.id);
+                // 2. Construire l'automate NFA
+                NFA nfa = toNFA(ret);
 
-            // 4. Debug transitions du start
-            System.out.println("  >> Start transitions: "
-                + nfa.start.transitions.size() + " symbol(s), "
-                + nfa.start.epsilonTransitions.size() + " epsilon(s).");
-            
-             System.out.println("  >> accept transitions: "
-                + nfa.accept.transitions.size() + " symbol(s), "
-                + nfa.accept.epsilonTransitions.size() + " epsilon(s).");
+                // 3. Construire le DFA
+                DFA dfa = determinize(nfa);
 
-              printNFA(nfa);
+                // for (Map.Entry<DfaState, Map<Character, DfaState>> entry : dfa.trans.entrySet()) {
+                //     DfaState from = entry.getKey();
+                //     for (Map.Entry<Character, DfaState> t : entry.getValue().entrySet()) {
+                //         char c = t.getKey();
+                //         DfaState to = t.getValue();
+                //     }
+                // }
 
-              // 5. Construire le DFA
-              DFA dfa = determinize(nfa);
+                //dfa.printDFA();
+                // 4. Minimisation et retrait des états inatteignable
+                DFA minimizedDFA = DFA.updateDFA(dfa);
+                //minimizedDFA.printDFA();
 
-              // 6. Afficher le DFA pour debug
-              System.out.println("  >> DFA states:");
-              for (DfaState q : dfa.states) {
-                  String ids = keyOf(q.nfaSet);
-                  System.out.println("    q" + q.id + " = {" + ids + "} "
-                      + (q.isAccept ? "(final)" : ""));
-              }
+                // 5. Recherche de mot à partir du DFA
 
-              System.out.println("  >> DFA transitions:");
-              for (Map.Entry<DfaState, Map<Character, DfaState>> entry : dfa.trans.entrySet()) {
-                  DfaState from = entry.getKey();
-                  for (Map.Entry<Character, DfaState> t : entry.getValue().entrySet()) {
-                      char c = t.getKey();
-                      DfaState to = t.getValue();
-                      System.out.println("    q" + from.id + " --" + c + "--> q" + to.id);
-                  }
-              }
+                System.out.println("-------------- DFA reasearch --------------\n\n\n");
 
-              System.out.println("######### Nouveaux print du DFA");
-              dfa.printDFA();
+                List<String> dfaSearchResult = TextSearcher.searchText("ProjetDaar_RegEx/backEnd/Store/texts/56667-0.txt", minimizedDFA);
+                for (String line : dfaSearchResult) {
+                  System.err.println(line);
+                }
 
-              System.out.println("######### Nouveaux print du DFA minimisé");
-              DFA minimizedDFA = DFA.updateDFA(dfa);
-              minimizedDFA.printDFA();
+                System.out.println("\n\n\n-------------- KMP reasearch --------------\n\n\n");
 
+                // 6. Recherche de mot à partir de KMP
+                System.out.print("Mot à chercher (KMP) : ");
+                String needle = scanner.nextLine();
+                Character[] P = toCharacterArray(needle);
 
-        } catch (Exception e) {
-            System.err.println("  >> ERROR: syntax error for regEx \"" + regEx + "\".");
-            e.printStackTrace();
+                List<String> kmpSearchResult = KMP.searchPhase(P, "ProjetDaar_RegEx/backEnd/Store/texts/56667-0.txt");
+                for (String line : kmpSearchResult) {
+                    System.err.println(line);
+                }
+
+            } catch (Exception e) {
+                System.err.println("  >> ERROR: syntax error for regEx \"" + regEx + "\".");
+            }
         }
     }
-
-
-
-    System.out.println("  >> ...");
-    System.out.println("  >> Parsing completed.");
-    System.out.println("Goodbye Mr. Anderson.");
 }
+
+  private static void runTests() {
+    System.out.println("Launching DFA validation tests...\n");
+    List<RegexTestCase> tests = new ArrayList<>();
+    tests.add(new RegexTestCase("Literal match", "ab", "ab", true, 0, 1));
+    tests.add(new RegexTestCase("Literal mismatch", "ab", "ac", false, 0, -1));
+    tests.add(new RegexTestCase("Dot in middle", "a.b", "acb", true, 0, 2));
+    tests.add(new RegexTestCase("Dot mismatch", "a.b", "ab", false, 0, -1));
+    tests.add(new RegexTestCase("Kleene star", "a*b", "aaab", true, 0, 3));
+    tests.add(new RegexTestCase("Alternation", "(a|b)c", "bc", true, 0, 1));
+
+    int passed = 0;
+    for (RegexTestCase test : tests) {
+      try {
+        int[] result = evaluatePattern(test.pattern, test.input);
+        boolean success = test.shouldMatch
+            ? result[1] == test.expectedEnd && result[0] == test.expectedStart
+            : result[1] == -1;
+
+        if (success) {
+          passed++;
+          System.out.println("[PASS] " + test.name);
+        } else {
+          System.out.println("[FAIL] " + test.name + " | expected start="
+              + test.expectedStart + ", end=" + test.expectedEnd + " but got "
+              + Arrays.toString(result));
+        }
+      } catch (Exception e) {
+        System.out.println("[ERROR] " + test.name + " | " + e.getMessage());
+      }
+    }
+
+    System.out.println("\nTest summary: " + passed + "/" + tests.size() + " passed.");
+  }
+
+  private static int[] evaluatePattern(String pattern, String input) throws Exception {
+    counter = 0;
+    regEx = pattern;
+    RegExTree tree = parse();
+    NFA nfa = toNFA(tree);
+    DFA dfa = determinize(nfa);
+    DFA minimized = DFA.updateDFA(dfa);
+    return minimized.validateString(toCharacterArray(input));
+  }
+
+  private static Character[] toCharacterArray(String input) {
+    Character[] array = new Character[input.length()];
+    for (int i = 0; i < input.length(); i++) {
+      array[i] = input.charAt(i);
+    }
+    return array;
+  }
+
+  private static class RegexTestCase {
+    final String name;
+    final String pattern;
+    final String input;
+    final boolean shouldMatch;
+    final int expectedStart;
+    final int expectedEnd;
+
+    RegexTestCase(String name, String pattern, String input, boolean shouldMatch,
+        int expectedStart, int expectedEnd) {
+      this.name = name;
+      this.pattern = pattern;
+      this.input = input;
+      this.shouldMatch = shouldMatch;
+      this.expectedStart = expectedStart;
+      this.expectedEnd = expectedEnd;
+    }
+  }
 
 public static void printNFA(NFA nfa) {
     Set<State> visited = new HashSet<>();
@@ -149,7 +197,7 @@ public static void printNFA(NFA nfa) {
 
 
 
-  public static NFA toNFA(RegExTree tree) {
+  private static NFA toNFA(RegExTree tree) {
     if (tree.subTrees.isEmpty()) {
         State s = new State(counter++,false);
         State t = new State(counter++,true);
@@ -188,20 +236,14 @@ public static void printNFA(NFA nfa) {
 
     }
     throw new IllegalStateException("Operator cases not implemented yet: root=" + tree.root);
-
   }
 
   //FROM REGEX TO SYNTAX TREE
   private static RegExTree parse() throws Exception {
-    //BEGIN DEBUG: set conditionnal to true for debug example
-    if (false) throw new Exception();
-    RegExTree example = exampleAhoUllman();
-    if (false) return example;
-    //END DEBUG
 
-    ArrayList<RegExTree> result = new ArrayList<RegExTree>();
+    ArrayList<RegExTree> result = new ArrayList<>();
     for (int i=0;i<regEx.length();i++) 
-        result.add(new RegExTree(charToRoot(regEx.charAt(i)),new ArrayList<RegExTree>()));
+        result.add(new RegExTree(charToRoot(regEx.charAt(i)),new ArrayList<>()));
     
     return parse(result);
   }
@@ -228,18 +270,18 @@ public static void printNFA(NFA nfa) {
     return false;
   }
   private static ArrayList<RegExTree> processParenthese(ArrayList<RegExTree> trees) throws Exception {
-    ArrayList<RegExTree> result = new ArrayList<RegExTree>();
+    ArrayList<RegExTree> result = new ArrayList<>();
     boolean found = false;
     for (RegExTree t: trees) {
       if (!found && t.root==PARENTHESEFERMANT) {
         boolean done = false;
-        ArrayList<RegExTree> content = new ArrayList<RegExTree>();
+        ArrayList<RegExTree> content = new ArrayList<>();
         while (!done && !result.isEmpty())
           if (result.get(result.size()-1).root==PARENTHESEOUVRANT) { done = true; result.remove(result.size()-1); }
           else content.add(0,result.remove(result.size()-1));
         if (!done) throw new Exception();
         found = true;
-        ArrayList<RegExTree> subTrees = new ArrayList<RegExTree>();
+        ArrayList<RegExTree> subTrees = new ArrayList<>();
         subTrees.add(parse(content));
         result.add(new RegExTree(PROTECTION, subTrees));
       } else {
@@ -254,14 +296,14 @@ public static void printNFA(NFA nfa) {
     return false;
   }
   private static ArrayList<RegExTree> processEtoile(ArrayList<RegExTree> trees) throws Exception {
-    ArrayList<RegExTree> result = new ArrayList<RegExTree>();
+    ArrayList<RegExTree> result = new ArrayList<>();
     boolean found = false;
     for (RegExTree t: trees) {
       if (!found && t.root==ETOILE && t.subTrees.isEmpty()) {
         if (result.isEmpty()) throw new Exception();
         found = true;
         RegExTree last = result.remove(result.size()-1);
-        ArrayList<RegExTree> subTrees = new ArrayList<RegExTree>();
+        ArrayList<RegExTree> subTrees = new ArrayList<>();
         subTrees.add(last);
         result.add(new RegExTree(ETOILE, subTrees));
       } else {
@@ -279,7 +321,7 @@ public static void printNFA(NFA nfa) {
     return false;
   }
   private static ArrayList<RegExTree> processConcat(ArrayList<RegExTree> trees) throws Exception {
-    ArrayList<RegExTree> result = new ArrayList<RegExTree>();
+    ArrayList<RegExTree> result = new ArrayList<>();
     boolean found = false;
     boolean firstFound = false;
     for (RegExTree t: trees) {
@@ -296,7 +338,7 @@ public static void printNFA(NFA nfa) {
       if (!found && firstFound && t.root!=ALTERN) {
         found = true;
         RegExTree last = result.remove(result.size()-1);
-        ArrayList<RegExTree> subTrees = new ArrayList<RegExTree>();
+        ArrayList<RegExTree> subTrees = new ArrayList<>();
         subTrees.add(last);
         subTrees.add(t);
         result.add(new RegExTree(CONCAT, subTrees));
@@ -311,7 +353,7 @@ public static void printNFA(NFA nfa) {
     return false;
   }
   private static ArrayList<RegExTree> processAltern(ArrayList<RegExTree> trees) throws Exception {
-    ArrayList<RegExTree> result = new ArrayList<RegExTree>();
+    ArrayList<RegExTree> result = new ArrayList<>();
     boolean found = false;
     RegExTree gauche = null;
     boolean done = false;
@@ -325,7 +367,7 @@ public static void printNFA(NFA nfa) {
       if (found && !done) {
         if (gauche==null) throw new Exception();
         done=true;
-        ArrayList<RegExTree> subTrees = new ArrayList<RegExTree>();
+        ArrayList<RegExTree> subTrees = new ArrayList<>();
         subTrees.add(gauche);
         subTrees.add(t);
         result.add(new RegExTree(ALTERN, subTrees));
@@ -340,7 +382,7 @@ public static void printNFA(NFA nfa) {
     if (tree.subTrees.isEmpty()) return tree;
     if (tree.root==PROTECTION) return removeProtection(tree.subTrees.get(0));
 
-    ArrayList<RegExTree> subTrees = new ArrayList<RegExTree>();
+    ArrayList<RegExTree> subTrees = new ArrayList<>();
     for (RegExTree t: tree.subTrees) subTrees.add(removeProtection(t));
     return new RegExTree(tree.root, subTrees);
   }
@@ -348,17 +390,17 @@ public static void printNFA(NFA nfa) {
   //EXAMPLE
   // --> RegEx from Aho-Ullman book Chap.10 Example 10.25
   private static RegExTree exampleAhoUllman() {
-    RegExTree a = new RegExTree((int)'a', new ArrayList<RegExTree>());
-    RegExTree b = new RegExTree((int)'b', new ArrayList<RegExTree>());
-    RegExTree c = new RegExTree((int)'c', new ArrayList<RegExTree>());
-    ArrayList<RegExTree> subTrees = new ArrayList<RegExTree>();
+    RegExTree a = new RegExTree((int)'a', new ArrayList<>());
+    RegExTree b = new RegExTree((int)'b', new ArrayList<>());
+    RegExTree c = new RegExTree((int)'c', new ArrayList<>());
+    ArrayList<RegExTree> subTrees = new ArrayList<>();
     subTrees.add(c);
     RegExTree cEtoile = new RegExTree(ETOILE, subTrees);
-    subTrees = new ArrayList<RegExTree>();
+    subTrees = new ArrayList<>();
     subTrees.add(b);
     subTrees.add(cEtoile);
     RegExTree dotBCEtoile = new RegExTree(CONCAT, subTrees);
-    subTrees = new ArrayList<RegExTree>();
+    subTrees = new ArrayList<>();
     subTrees.add(a);
     subTrees.add(dotBCEtoile);
     return new RegExTree(ALTERN, subTrees);
@@ -466,8 +508,6 @@ public static void printNFA(NFA nfa) {
 
 }
 
-
-
 //UTILITARY CLASS
 class RegExTree {
   protected int root;
@@ -477,6 +517,7 @@ class RegExTree {
     this.subTrees = subTrees;
   }
   //FROM TREE TO PARENTHESIS
+  @Override
   public String toString() {
     if (subTrees.isEmpty()) return rootToString();
     String result = rootToString()+"("+subTrees.get(0).toString();

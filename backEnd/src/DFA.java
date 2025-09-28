@@ -185,4 +185,45 @@ public class DFA {
         }
     }
 
+    // TODO : We should've created a new Class for minimized DFA.
+    // Check if a DFA can accept text (Has a start, Has at least a final state, can transition from start to final state)
+    // Precondition : the dfa is minimized (there is no unreachable state)
+    public boolean validateDFAFortextMatching() {
+        if (start == null) return false;
+        return states.stream().anyMatch(state -> state.isAccept); // Since the DFA is minimized if there's at least a final state, then we can access it.
+    }
+
+    // Returns an array where the first element represent the start of the validated word end the second element the end of the word
+    public int[] validateString(Character[] characters) {
+        int[] res = new int[2];
+        res[0] = 0; // Starting index of the word
+        res[1] = -1; // Ending index of the word
+        if (!validateDFAFortextMatching()) return res;
+        DfaState currentNode = start;
+        for (int i = 0; i < characters.length; i++) {
+            Map<Character, DfaState> out = trans.get(currentNode);
+            if (out == null) continue;
+            DfaState nextNode = out.get(characters[i]);
+            if (nextNode == null) nextNode = out.get((char)RegEx.DOT);
+            if (nextNode == null) {
+                if (currentNode.isAccept) {
+                    res[1] = i-1;
+                    return res;
+                }
+                else {
+                    currentNode = start;
+                    res[0] = i+1;
+                }
+            }
+            else {
+                if (currentNode.isAccept) {
+                    res[1] = i;
+                }
+                currentNode = nextNode;
+            }
+        }
+        if (currentNode.isAccept) res[1] = characters.length-1;
+        return res;
+    }
+
 }
