@@ -8,7 +8,6 @@ public class TextSearcher {
 
     // Read the text and search on each line specific character combinations based on the given DFA.
     public static List<String> searchText(String filePath, DFA dfa) throws IOException {
-        System.out.println("Starting ...");
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
             List<String> res = new ArrayList<>();

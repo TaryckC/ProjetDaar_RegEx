@@ -218,6 +218,7 @@ public class DFA {
             else {
                 if (currentNode.isAccept) {
                     res[1] = i;
+                    return res;
                 }
                 currentNode = nextNode;
             }

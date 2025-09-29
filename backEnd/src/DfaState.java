@@ -25,5 +25,4 @@ public class DfaState {
         }
         return "DfaState{id=" + id + ", isAccept=" + isAccept + ", nfaSet=" + ids + "}";
     }
-
 }

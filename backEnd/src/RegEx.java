@@ -9,7 +9,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Scanner;
 import java.util.Set;
 
 public class RegEx {
@@ -32,71 +31,11 @@ public class RegEx {
 
   //MAIN
 public static void main(String[] args) {
-    if (args.length > 0 && "--tests".equals(args[0])) {
-        runTests();
-        return;
-    }
-
-    try (Scanner scanner = new Scanner(System.in)) {
-        // 1. Lire l'expression régulière
-        if (args.length != 0) {
-            regEx = args[0];
-        } else {
-            regEx = scanner.next();
-            scanner.nextLine(); // consume trailing newline
-        }
-
-        if (regEx.length() < 1) {
-        } else {
-            try {
-                // 1. Parser
-                RegExTree ret = parse();
-
-                // 2. Construire l'automate NFA
-                NFA nfa = toNFA(ret);
-
-                // 3. Construire le DFA
-                DFA dfa = determinize(nfa);
-
-                // for (Map.Entry<DfaState, Map<Character, DfaState>> entry : dfa.trans.entrySet()) {
-                //     DfaState from = entry.getKey();
-                //     for (Map.Entry<Character, DfaState> t : entry.getValue().entrySet()) {
-                //         char c = t.getKey();
-                //         DfaState to = t.getValue();
-                //     }
-                // }
-
-                //dfa.printDFA();
-                // 4. Minimisation et retrait des états inatteignable
-                DFA minimizedDFA = DFA.updateDFA(dfa);
-                //minimizedDFA.printDFA();
-
-                // 5. Recherche de mot à partir du DFA
-
-                System.out.println("-------------- DFA reasearch --------------\n\n\n");
-
-                List<String> dfaSearchResult = TextSearcher.searchText("ProjetDaar_RegEx/backEnd/Store/texts/56667-0.txt", minimizedDFA);
-                for (String line : dfaSearchResult) {
-                  System.err.println(line);
-                }
-
-                System.out.println("\n\n\n-------------- KMP reasearch --------------\n\n\n");
-
-                // 6. Recherche de mot à partir de KMP
-                System.out.print("Mot à chercher (KMP) : ");
-                String needle = scanner.nextLine();
-                Character[] P = toCharacterArray(needle);
-
-                List<String> kmpSearchResult = KMP.searchPhase(P, "ProjetDaar_RegEx/backEnd/Store/texts/56667-0.txt");
-                for (String line : kmpSearchResult) {
-                    System.err.println(line);
-                }
-
-            } catch (Exception e) {
-                System.err.println("  >> ERROR: syntax error for regEx \"" + regEx + "\".");
-            }
-        }
-    }
+  try {
+    Test.runTests("ProjetDaar_RegEx/backEnd/Store/tests", "ProjetDaar_RegEx/backEnd/Store/texts", "ProjetDaar_RegEx/backEnd/Store/tests_results");
+  } catch (Exception e) {
+    System.out.println("Echec losr de la réalisation des tests");
+  }
 }
 
   private static void runTests() {
@@ -141,6 +80,21 @@ public static void main(String[] args) {
     DFA dfa = determinize(nfa);
     DFA minimized = DFA.updateDFA(dfa);
     return minimized.validateString(toCharacterArray(input));
+  }
+
+  /**
+   * Build a minimized DFA instance from a regex pattern string.
+   */
+  public static DFA buildDFA(String pattern) throws Exception {
+    if (pattern == null) {
+      throw new IllegalArgumentException("pattern must not be null");
+    }
+    counter = 0;
+    regEx = pattern;
+    RegExTree tree = parse();
+    NFA nfa = toNFA(tree);
+    DFA dfa = determinize(nfa);
+    return DFA.updateDFA(dfa);
   }
 
   private static Character[] toCharacterArray(String input) {
@@ -506,29 +460,4 @@ public static void printNFA(NFA nfa) {
 
   }
 
-}
-
-//UTILITARY CLASS
-class RegExTree {
-  protected int root;
-  protected ArrayList<RegExTree> subTrees;
-  public RegExTree(int root, ArrayList<RegExTree> subTrees) {
-    this.root = root;
-    this.subTrees = subTrees;
-  }
-  //FROM TREE TO PARENTHESIS
-  @Override
-  public String toString() {
-    if (subTrees.isEmpty()) return rootToString();
-    String result = rootToString()+"("+subTrees.get(0).toString();
-    for (int i=1;i<subTrees.size();i++) result+=","+subTrees.get(i).toString();
-    return result+")";
-  }
-  private String rootToString() {
-    if (root==RegEx.CONCAT) return ".";
-    if (root==RegEx.ETOILE) return "*";
-    if (root==RegEx.ALTERN) return "|";
-    if (root==RegEx.DOT) return ".";
-    return Character.toString((char)root);
-  }
 }

@@ -1,0 +1,10 @@
+cat
+dog
+house
+(a|b)*c
+S(a|g|r)*on
+(a|ba)*b
+a.*b
+(aa)*a
+(Merodach|Sargon).*wall
+qwertyuiopasdfgh
