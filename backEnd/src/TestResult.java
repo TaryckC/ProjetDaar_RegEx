@@ -23,11 +23,11 @@ public class TestResult {
 
     public String toJson() {
         return "{"
-            + "\"method\":\"" + method + "\","
-            + "\"pattern\":\"" + pattern + "\","
-            + "\"result\":" + result.toString() + ","
-            + "\"resultSize\":" + result.size() + ","
-            + "\"time\":" + time
-            + "}";
+                + "\"method\":\"" + method + "\","
+                + "\"pattern\":\"" + pattern + "\","
+                + "\"result\":" + result.toString() + ","
+                + "\"resultSize\":" + result.size() + ","
+                + "\"time\":" + time
+                + "}";
     }
 }

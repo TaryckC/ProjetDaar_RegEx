@@ -6,7 +6,8 @@ import java.util.List;
 
 public class TextSearcher {
 
-    // Read the text and search on each line specific character combinations based on the given DFA.
+    // Read the text and search on each line specific character combinations based
+    // on the given DFA.
     public static List<String> searchText(String filePath, DFA dfa) throws IOException {
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;

@@ -15,9 +15,10 @@ import java.util.regex.PatternSyntaxException;
 public class Test {
 
     // The test folder must contain the following files :
-    //      - pattern_regex.txt
-    //      - pattern_words.txt
-    public static void runTests(String path_to_test_folder, String path_to_texts, String path_to_results_writing) throws IOException{
+    // - pattern_regex.txt
+    // - pattern_words.txt
+    public static void runTests(String path_to_test_folder, String path_to_texts, String path_to_results_writing)
+            throws IOException {
         String regexFile = path_to_test_folder + "/pattern_regex.txt";
         String wordsFile = path_to_test_folder + "/pattern_words.txt";
 
@@ -33,33 +34,32 @@ public class Test {
             // 3) Comparing results
             String errorsOutPath = path_to_results_writing + "/results_comparison.txt";
             try (var errWriter = Files.newBufferedWriter(Path.of(errorsOutPath), StandardCharsets.UTF_8)) {
-                for (int i=0; i<wordResults.size(); i+=3) {
+                for (int i = 0; i < wordResults.size(); i += 3) {
                     List<String> list1 = wordResults.get(i).getResult();
-                    List<String> list2 = wordResults.get(i+1).getResult();
-                    List<String> list3 = wordResults.get(i+2).getResult();
+                    List<String> list2 = wordResults.get(i + 1).getResult();
+                    List<String> list3 = wordResults.get(i + 2).getResult();
 
                     if (!(list1.equals(list2) && list2.equals(list3))) {
-                        errWriter.write(i/3 + ";" + wordResults.get(i).getPattern());
+                        errWriter.write(i / 3 + ";" + wordResults.get(i).getPattern());
                         errWriter.newLine();
                     }
                 }
 
-                for (int i=0; i<regexResults.size(); i+=2) {
+                for (int i = 0; i < regexResults.size(); i += 2) {
                     List<String> list1 = regexResults.get(i).getResult();
-                    List<String> list2 = regexResults.get(i+1).getResult();
+                    List<String> list2 = regexResults.get(i + 1).getResult();
 
                     if (!(list1.equals(list2))) {
                         // System.out.println(regexResults.get(i).getResult());
                         // System.out.println("-----------------------------------");
                         // System.out.println(regexResults.get(i+1).getResult());
-                        errWriter.write(i/2 + ";" + regexResults.get(i).getPattern());
+                        errWriter.write(i / 2 + ";" + regexResults.get(i).getPattern());
                         errWriter.newLine();
                     }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
 
             // 4) Writing results in two separate JSON files
             String regexOutPath = path_to_results_writing + "/results_regex.json";
@@ -97,8 +97,9 @@ public class Test {
         }
     }
 
-    private static List<TestResult> runComparisonTest(String path_to_test, String path_to_texts, boolean containsRegex) throws Exception {
-        try(BufferedReader br = new BufferedReader(new FileReader(path_to_test))) {
+    private static List<TestResult> runComparisonTest(String path_to_test, String path_to_texts, boolean containsRegex)
+            throws Exception {
+        try (BufferedReader br = new BufferedReader(new FileReader(path_to_test))) {
             String line;
             List<TestResult> results = new ArrayList<>();
             List<String> textFiles = collectTextFiles(Paths.get(path_to_texts));
@@ -107,7 +108,7 @@ public class Test {
                 if (pattern.isEmpty()) {
                     continue;
                 }
-                for(String path : textFiles) {
+                for (String path : textFiles) {
 
                     if (!containsRegex) {
                         // KMP
@@ -116,7 +117,7 @@ public class Test {
                         List<String> kmpSearchResult = KMP.searchPhase(chars, path);
                         long endTime = System.nanoTime();
                         long duration = endTime - startTime;
-                            
+
                         results.add(new TestResult("KMP", pattern, kmpSearchResult, duration));
 
                     }
@@ -127,12 +128,12 @@ public class Test {
                     List<String> dfaSearchResult = TextSearcher.searchText(path, dfa);
                     long endTime = System.nanoTime();
                     long duration = endTime - startTime;
-                        
+
                     results.add(new TestResult("DFA", pattern, dfaSearchResult, duration));
 
-                    if (pattern.equals("(Merodach|Sargon).*wall")) {
-                        dfa.printDFA();
-                        System.err.println(dfa.alphabet);
+                    if (pattern.equals("cat")) {
+                        // dfa.printDFA();
+                        // System.err.println(dfa.alphabet);
                     }
 
                     // egrep
@@ -155,7 +156,7 @@ public class Test {
 
         List<String> egrepResult = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(
-            new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+                new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
             String l;
             while ((l = reader.readLine()) != null) {
                 if (l.indexOf('\r') != -1) {
@@ -178,7 +179,8 @@ public class Test {
         }
 
         if (egrepResult.isEmpty() && exitCode != 1) {
-            // Fallback to Java regex to avoid empty results when egrep cannot be used (e.g., sandbox restrictions)
+            // Fallback to Java regex to avoid empty results when egrep cannot be used
+            // (e.g., sandbox restrictions)
             egrepResult = emulateEgrep(pattern, filePath);
         }
 

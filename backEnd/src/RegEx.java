@@ -12,7 +12,7 @@ import java.util.Queue;
 import java.util.Set;
 
 public class RegEx {
-  //MACROS
+  // MACROS
   static final int CONCAT = 0xC04CA7;
   static final int ETOILE = 0xE7011E;
   static final int ALTERN = 0xA17E54;
@@ -21,22 +21,24 @@ public class RegEx {
   static final int PARENTHESEOUVRANT = 0x16641664;
   static final int PARENTHESEFERMANT = 0x51515151;
   static final int DOT = 0xD07;
-  static int counter=0;
-  
-  //REGEX
-  private static String regEx;
-  
-  //CONSTRUCTOR
-  public RegEx(){}
+  static int counter = 0;
 
-  //MAIN
-public static void main(String[] args) {
-  try {
-    Test.runTests("ProjetDaar_RegEx/backEnd/Store/tests", "ProjetDaar_RegEx/backEnd/Store/texts", "ProjetDaar_RegEx/backEnd/Store/tests_results");
-  } catch (Exception e) {
-    System.out.println("Echec losr de la réalisation des tests");
+  // REGEX
+  private static String regEx;
+
+  // CONSTRUCTOR
+  public RegEx() {
   }
-}
+
+  // MAIN
+  public static void main(String[] args) {
+    try {
+      Test.runTests("ProjetDaar_RegEx/backEnd/Store/tests", "ProjetDaar_RegEx/backEnd/Store/texts",
+          "ProjetDaar_RegEx/backEnd/Store/tests_results");
+    } catch (Exception e) {
+      System.out.println("Echec losr de la réalisation des tests");
+    }
+  }
 
   private static void runTests() {
     System.out.println("Launching DFA validation tests...\n");
@@ -124,7 +126,7 @@ public static void main(String[] args) {
     }
   }
 
-public static void printNFA(NFA nfa) {
+  public static void printNFA(NFA nfa) {
     Set<State> visited = new HashSet<>();
     Queue<State> queue = new LinkedList<>();
     queue.add(nfa.start);
@@ -132,32 +134,31 @@ public static void printNFA(NFA nfa) {
 
     System.out.println("NFA transitions:");
     while (!queue.isEmpty()) {
-        State s = queue.poll();
-        // Transitions symboliques
-        for (Map.Entry<Character, List<State>> e : s.transitions.entrySet()) {
-            for (State target : e.getValue()) {
-                System.out.println("  " + s.id + " --" + e.getKey() + "--> " + target.id);
-                if (visited.add(target)) queue.add(target);
-            }
+      State s = queue.poll();
+      // Transitions symboliques
+      for (Map.Entry<Character, List<State>> e : s.transitions.entrySet()) {
+        for (State target : e.getValue()) {
+          System.out.println("  " + s.id + " --" + e.getKey() + "--> " + target.id);
+          if (visited.add(target))
+            queue.add(target);
         }
-        // Epsilon transitions
-        for (State target : s.epsilonTransitions) {
-            System.out.println("  " + s.id + " --ε--> " + target.id);
-            if (visited.add(target)) queue.add(target);
-        }
+      }
+      // Epsilon transitions
+      for (State target : s.epsilonTransitions) {
+        System.out.println("  " + s.id + " --ε--> " + target.id);
+        if (visited.add(target))
+          queue.add(target);
+      }
     }
-}
-
-
-
+  }
 
   private static NFA toNFA(RegExTree tree) {
     if (tree.subTrees.isEmpty()) {
-        State s = new State(counter++,false);
-        State t = new State(counter++,true);
-        s.addTransition((char) tree.root, t);
-        return new NFA(s, t);
-    }else if (tree.root == CONCAT){
+      State s = new State(counter++, false);
+      State t = new State(counter++, true);
+      s.addTransition((char) tree.root, t);
+      return new NFA(s, t);
+    } else if (tree.root == CONCAT) {
       NFA left = toNFA(tree.subTrees.get(0));
       NFA right = toNFA(tree.subTrees.get(1));
       left.accept.isAccept = false;
@@ -168,72 +169,92 @@ public static void printNFA(NFA nfa) {
       NFA right = toNFA(tree.subTrees.get(1));
       left.accept.isAccept = false;
       right.accept.isAccept = false;
-      State s = new State(counter++,false);
-      State t = new State(counter++,true);
+      State s = new State(counter++, false);
+      State t = new State(counter++, true);
       s.addEpsilonTransition(left.start);
       s.addEpsilonTransition(right.start);
       left.accept.addEpsilonTransition(t);
       right.accept.addEpsilonTransition(t);
       return new NFA(s, t);
-    } else if (tree.root == ETOILE){
+    } else if (tree.root == ETOILE) {
       NFA child = toNFA(tree.subTrees.get(0));
       child.accept.addEpsilonTransition(child.start);
-      
-      State s = new State(counter++,false);
-      State t = new State(counter++,true);
+
+      State s = new State(counter++, false);
+      State t = new State(counter++, true);
       s.addEpsilonTransition(child.start);
       s.addEpsilonTransition(t);
       child.accept.addEpsilonTransition(t);
       child.accept.isAccept = false;
-      
+
       return new NFA(s, t);
 
     }
     throw new IllegalStateException("Operator cases not implemented yet: root=" + tree.root);
   }
 
-  //FROM REGEX TO SYNTAX TREE
+  // FROM REGEX TO SYNTAX TREE
   private static RegExTree parse() throws Exception {
 
     ArrayList<RegExTree> result = new ArrayList<>();
-    for (int i=0;i<regEx.length();i++) 
-        result.add(new RegExTree(charToRoot(regEx.charAt(i)),new ArrayList<>()));
-    
+    for (int i = 0; i < regEx.length(); i++)
+      result.add(new RegExTree(charToRoot(regEx.charAt(i)), new ArrayList<>()));
+
     return parse(result);
   }
-  private static int charToRoot(char c) {
-    if (c=='.') return DOT;
-    if (c=='*') return ETOILE;
-    if (c=='|') return ALTERN;
-    if (c=='(') return PARENTHESEOUVRANT;
-    if (c==')') return PARENTHESEFERMANT;
-    return (int)c;
-  }
-  private static RegExTree parse(ArrayList<RegExTree> result) throws Exception {
-    while (containParenthese(result)) result=processParenthese(result);
-    while (containEtoile(result)) result=processEtoile(result);
-    while (containConcat(result)) result=processConcat(result);
-    while (containAltern(result)) result=processAltern(result);
 
-    if (result.size()>1) throw new Exception();
+  private static int charToRoot(char c) {
+    if (c == '.')
+      return DOT;
+    if (c == '*')
+      return ETOILE;
+    if (c == '|')
+      return ALTERN;
+    if (c == '(')
+      return PARENTHESEOUVRANT;
+    if (c == ')')
+      return PARENTHESEFERMANT;
+    return (int) c;
+  }
+
+  private static RegExTree parse(ArrayList<RegExTree> result) throws Exception {
+    while (containParenthese(result))
+      result = processParenthese(result);
+    while (containEtoile(result))
+      result = processEtoile(result);
+    while (containConcat(result))
+      result = processConcat(result);
+    while (containAltern(result))
+      result = processAltern(result);
+
+    if (result.size() > 1)
+      throw new Exception();
 
     return removeProtection(result.get(0));
   }
+
   private static boolean containParenthese(ArrayList<RegExTree> trees) {
-    for (RegExTree t: trees) if (t.root==PARENTHESEFERMANT || t.root==PARENTHESEOUVRANT) return true;
+    for (RegExTree t : trees)
+      if (t.root == PARENTHESEFERMANT || t.root == PARENTHESEOUVRANT)
+        return true;
     return false;
   }
+
   private static ArrayList<RegExTree> processParenthese(ArrayList<RegExTree> trees) throws Exception {
     ArrayList<RegExTree> result = new ArrayList<>();
     boolean found = false;
-    for (RegExTree t: trees) {
-      if (!found && t.root==PARENTHESEFERMANT) {
+    for (RegExTree t : trees) {
+      if (!found && t.root == PARENTHESEFERMANT) {
         boolean done = false;
         ArrayList<RegExTree> content = new ArrayList<>();
         while (!done && !result.isEmpty())
-          if (result.get(result.size()-1).root==PARENTHESEOUVRANT) { done = true; result.remove(result.size()-1); }
-          else content.add(0,result.remove(result.size()-1));
-        if (!done) throw new Exception();
+          if (result.get(result.size() - 1).root == PARENTHESEOUVRANT) {
+            done = true;
+            result.remove(result.size() - 1);
+          } else
+            content.add(0, result.remove(result.size() - 1));
+        if (!done)
+          throw new Exception();
         found = true;
         ArrayList<RegExTree> subTrees = new ArrayList<>();
         subTrees.add(parse(content));
@@ -242,21 +263,27 @@ public static void printNFA(NFA nfa) {
         result.add(t);
       }
     }
-    if (!found) throw new Exception();
+    if (!found)
+      throw new Exception();
     return result;
   }
+
   private static boolean containEtoile(ArrayList<RegExTree> trees) {
-    for (RegExTree t: trees) if (t.root==ETOILE && t.subTrees.isEmpty()) return true;
+    for (RegExTree t : trees)
+      if (t.root == ETOILE && t.subTrees.isEmpty())
+        return true;
     return false;
   }
+
   private static ArrayList<RegExTree> processEtoile(ArrayList<RegExTree> trees) throws Exception {
     ArrayList<RegExTree> result = new ArrayList<>();
     boolean found = false;
-    for (RegExTree t: trees) {
-      if (!found && t.root==ETOILE && t.subTrees.isEmpty()) {
-        if (result.isEmpty()) throw new Exception();
+    for (RegExTree t : trees) {
+      if (!found && t.root == ETOILE && t.subTrees.isEmpty()) {
+        if (result.isEmpty())
+          throw new Exception();
         found = true;
-        RegExTree last = result.remove(result.size()-1);
+        RegExTree last = result.remove(result.size() - 1);
         ArrayList<RegExTree> subTrees = new ArrayList<>();
         subTrees.add(last);
         result.add(new RegExTree(ETOILE, subTrees));
@@ -266,32 +293,41 @@ public static void printNFA(NFA nfa) {
     }
     return result;
   }
+
   private static boolean containConcat(ArrayList<RegExTree> trees) {
     boolean firstFound = false;
-    for (RegExTree t: trees) {
-      if (!firstFound && t.root!=ALTERN) { firstFound = true; continue; }
-      if (firstFound) if (t.root!=ALTERN) return true; else firstFound = false;
+    for (RegExTree t : trees) {
+      if (!firstFound && t.root != ALTERN) {
+        firstFound = true;
+        continue;
+      }
+      if (firstFound)
+        if (t.root != ALTERN)
+          return true;
+        else
+          firstFound = false;
     }
     return false;
   }
+
   private static ArrayList<RegExTree> processConcat(ArrayList<RegExTree> trees) throws Exception {
     ArrayList<RegExTree> result = new ArrayList<>();
     boolean found = false;
     boolean firstFound = false;
-    for (RegExTree t: trees) {
-      if (!found && !firstFound && t.root!=ALTERN) {
+    for (RegExTree t : trees) {
+      if (!found && !firstFound && t.root != ALTERN) {
         firstFound = true;
         result.add(t);
         continue;
       }
-      if (!found && firstFound && t.root==ALTERN) {
+      if (!found && firstFound && t.root == ALTERN) {
         firstFound = false;
         result.add(t);
         continue;
       }
-      if (!found && firstFound && t.root!=ALTERN) {
+      if (!found && firstFound && t.root != ALTERN) {
         found = true;
-        RegExTree last = result.remove(result.size()-1);
+        RegExTree last = result.remove(result.size() - 1);
         ArrayList<RegExTree> subTrees = new ArrayList<>();
         subTrees.add(last);
         subTrees.add(t);
@@ -302,25 +338,31 @@ public static void printNFA(NFA nfa) {
     }
     return result;
   }
+
   private static boolean containAltern(ArrayList<RegExTree> trees) {
-    for (RegExTree t: trees) if (t.root==ALTERN && t.subTrees.isEmpty()) return true;
+    for (RegExTree t : trees)
+      if (t.root == ALTERN && t.subTrees.isEmpty())
+        return true;
     return false;
   }
+
   private static ArrayList<RegExTree> processAltern(ArrayList<RegExTree> trees) throws Exception {
     ArrayList<RegExTree> result = new ArrayList<>();
     boolean found = false;
     RegExTree gauche = null;
     boolean done = false;
-    for (RegExTree t: trees) {
-      if (!found && t.root==ALTERN && t.subTrees.isEmpty()) {
-        if (result.isEmpty()) throw new Exception();
+    for (RegExTree t : trees) {
+      if (!found && t.root == ALTERN && t.subTrees.isEmpty()) {
+        if (result.isEmpty())
+          throw new Exception();
         found = true;
-        gauche = result.remove(result.size()-1);
+        gauche = result.remove(result.size() - 1);
         continue;
       }
       if (found && !done) {
-        if (gauche==null) throw new Exception();
-        done=true;
+        if (gauche == null)
+          throw new Exception();
+        done = true;
         ArrayList<RegExTree> subTrees = new ArrayList<>();
         subTrees.add(gauche);
         subTrees.add(t);
@@ -331,22 +373,27 @@ public static void printNFA(NFA nfa) {
     }
     return result;
   }
+
   private static RegExTree removeProtection(RegExTree tree) throws Exception {
-    if (tree.root==PROTECTION && tree.subTrees.size()!=1) throw new Exception();
-    if (tree.subTrees.isEmpty()) return tree;
-    if (tree.root==PROTECTION) return removeProtection(tree.subTrees.get(0));
+    if (tree.root == PROTECTION && tree.subTrees.size() != 1)
+      throw new Exception();
+    if (tree.subTrees.isEmpty())
+      return tree;
+    if (tree.root == PROTECTION)
+      return removeProtection(tree.subTrees.get(0));
 
     ArrayList<RegExTree> subTrees = new ArrayList<>();
-    for (RegExTree t: tree.subTrees) subTrees.add(removeProtection(t));
+    for (RegExTree t : tree.subTrees)
+      subTrees.add(removeProtection(t));
     return new RegExTree(tree.root, subTrees);
   }
-  
-  //EXAMPLE
+
+  // EXAMPLE
   // --> RegEx from Aho-Ullman book Chap.10 Example 10.25
   private static RegExTree exampleAhoUllman() {
-    RegExTree a = new RegExTree((int)'a', new ArrayList<>());
-    RegExTree b = new RegExTree((int)'b', new ArrayList<>());
-    RegExTree c = new RegExTree((int)'c', new ArrayList<>());
+    RegExTree a = new RegExTree((int) 'a', new ArrayList<>());
+    RegExTree b = new RegExTree((int) 'b', new ArrayList<>());
+    RegExTree c = new RegExTree((int) 'c', new ArrayList<>());
     ArrayList<RegExTree> subTrees = new ArrayList<>();
     subTrees.add(c);
     RegExTree cEtoile = new RegExTree(ETOILE, subTrees);
@@ -361,64 +408,68 @@ public static void printNFA(NFA nfa) {
   }
 
   private static Set<State> epsilonClosure(Set<State> S) {
-    Set<State> closure = new HashSet<>(S);          // inclure S dès le départ
-    Deque<State> stack = new ArrayDeque<>(S);       // pile/queue de travail
+    Set<State> closure = new HashSet<>(S); // inclure S dès le départ
+    Deque<State> stack = new ArrayDeque<>(S); // pile/queue de travail
 
     while (!stack.isEmpty()) {
-        State s = stack.pop();
-        for (State t : s.epsilonTransitions) {
-            if (!closure.contains(t)) {
-                closure.add(t);
-                stack.push(t);  // explorer aussi les ε de ce nouvel état
-            }
+      State s = stack.pop();
+      for (State t : s.epsilonTransitions) {
+        if (!closure.contains(t)) {
+          closure.add(t);
+          stack.push(t); // explorer aussi les ε de ce nouvel état
         }
+      }
     }
 
     return closure;
   }
 
   public static Set<State> move(Set<State> S, char c) {
-      Set<State> result = new HashSet<>();
-      for (State s : S) {
-          List<State> targets = s.transitions.get(c);
-          if (targets != null) {
-            result.addAll(targets);
-          }
+    Set<State> result = new HashSet<>();
+    for (State s : S) {
+      List<State> targets = s.transitions.get(c);
+      if (targets != null) {
+        result.addAll(targets);
       }
-      return result;
+    }
+    return result;
   }
 
   public static Set<Character> symbolsFrom(Set<State> S) {
-    // retourne l’union des clés S_i.transitions.keySet() pour tous les états S_i ∈ S
+    // retourne l’union des clés S_i.transitions.keySet() pour tous les états S_i ∈
+    // S
     Set<Character> sCharacters = new HashSet<>();
-    for(State s :S ){
+    for (State s : S) {
       sCharacters.addAll(s.transitions.keySet());
     }
     return sCharacters;
   }
 
   public static String keyOf(Set<State> set) {
-    if (set == null || set.isEmpty()) return "Ø"; // clé pour l’ensemble vide 
+    if (set == null || set.isEmpty())
+      return "Ø"; // clé pour l’ensemble vide
     List<Integer> ids = new ArrayList<>(set.size());
-    for (State s : set) ids.add(s.id);
+    for (State s : set)
+      ids.add(s.id);
     Collections.sort(ids);
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < ids.size(); i++) {
-        if (i > 0) sb.append(',');
-        sb.append(ids.get(i));
+      if (i > 0)
+        sb.append(',');
+      sb.append(ids.get(i));
     }
     return sb.toString(); // ex: "0,2,5"
   }
 
-  public static DFA determinize(NFA nfa){
+  public static DFA determinize(NFA nfa) {
     DFA dfa = new DFA();
-    Map<String,DfaState> registre = new HashMap<>();
+    Map<String, DfaState> registre = new HashMap<>();
     Set<State> startSet = new HashSet<>();
     startSet.add(nfa.start);
     Set<State> closure = epsilonClosure(startSet);
     int nextId = 0;
     DfaState start = registre.get(keyOf(closure));
-    if (start == null){
+    if (start == null) {
       start = new DfaState(nextId++, closure, closure.contains(nfa.accept));
       registre.put(keyOf(startSet), start);
       dfa.states.add(start);
@@ -426,34 +477,32 @@ public static void printNFA(NFA nfa) {
     }
     dfa.start = start;
 
- 
-
     Queue<DfaState> worklist = new LinkedList<>();
     worklist.add(start);
 
     while (!worklist.isEmpty()) {
-        DfaState curr = worklist.poll();
+      DfaState curr = worklist.poll();
 
-        for (char c : symbolsFrom(curr.nfaSet)) {
-            Set<State> moved = move(curr.nfaSet, c);
-            Set<State> targetSet = epsilonClosure(moved);
-            if (targetSet.isEmpty()) continue; // pas d’état
+      for (char c : symbolsFrom(curr.nfaSet)) {
+        Set<State> moved = move(curr.nfaSet, c);
+        Set<State> targetSet = epsilonClosure(moved);
+        if (targetSet.isEmpty())
+          continue; // pas d’état
 
-            
-            String k = keyOf(targetSet);
-            DfaState target = registre.get(k);
-            if (target == null) {
-                target = new DfaState(nextId++, targetSet, targetSet.contains(nfa.accept));
-                registre.put(k, target);
-                dfa.states.add(target);
-                dfa.trans.put(target, new HashMap<>());
-                worklist.add(target); // on explore plus tard
-            }
-
-            // relier la transition
-            dfa.trans.get(curr).put(c, target);
-            dfa.alphabet.add(c);
+        String k = keyOf(targetSet);
+        DfaState target = registre.get(k);
+        if (target == null) {
+          target = new DfaState(nextId++, targetSet, targetSet.contains(nfa.accept));
+          registre.put(k, target);
+          dfa.states.add(target);
+          dfa.trans.put(target, new HashMap<>());
+          worklist.add(target); // on explore plus tard
         }
+
+        // relier la transition
+        dfa.trans.get(curr).put(c, target);
+        dfa.alphabet.add(c);
+      }
     }
 
     return dfa;
