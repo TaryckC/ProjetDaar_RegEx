@@ -15,23 +15,44 @@ public class KMP {
             throw new IllegalArgumentException("pattern must not be empty");
 
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-            int[] pi = computePi(P);
+            int[] co = computeCO(P);
             List<String> res = new ArrayList<>();
             String line;
             while ((line = br.readLine()) != null) {
-                int q = 0;
-                char[] chars = line.toCharArray();
-                for (char currentChar : chars) {
-                    while (q > 0 && !P[q].equals(currentChar)) {
-                        q = pi[q - 1];
-                    }
+                int q = 0; // index in pattern
+                int i = 0; // index in current line
+                while (i < line.length()) {
+                    char currentChar = line.charAt(i);
                     if (P[q].equals(currentChar)) {
-                        q = q + 1;
-                    }
-                    if (q == P.length) {
-                        res.add(line);
-                        q = pi[q - 1];
-                        break; // we only need the line once
+                        q++;
+                        i++;
+                        if (q == P.length) {
+                            res.add(line);
+                            q = co[q - 1];
+                            if (q < 0) {
+                                q = 0;
+                            }
+                            break;
+                        }
+                    } else {
+                        int instruction = co[q];
+                        switch (instruction) {
+                            case -1 -> {
+                                i++;
+                                q = 0;
+                            }
+                            case 0 -> q = 0;
+                            case 1 -> {
+                                if (i > 0) {
+                                    i--;
+                                }
+                                q = 1;
+                            }
+                            default -> q = instruction;
+                        }
+                        if (i < 0) {
+                            i = 0;
+                        }
                     }
                 }
             }
@@ -39,20 +60,27 @@ public class KMP {
         }
     }
 
-    private static int[] computePi(Character[] P) {
-        int[] pi = new int[P.length];
-        pi[0] = 0;
-        for (int q = 1; q < P.length; q++) {
-            int k = pi[q - 1];
-            while (k > 0 && !P[k].equals(P[q])) {
-                k = pi[k - 1];
+    private static int[] computeCO(Character[] P) {
+        int[] CO = new int[P.length];
+        CO[0] = -1;
+        // Step 1
+        for (int i = 1; i < CO.length; i++) {
+            int prefixeLengthCounter = 0;
+            for (int j = 0; j < i; i++) {
+                if (P[i - 1].equals(P[j]))
+                    prefixeLengthCounter = prefixeLengthCounter + 1;
+                else {
+                    prefixeLengthCounter = 0;
+                    break;
+                }
             }
-            if (P[k].equals(P[q])) {
-                pi[q] = k + 1;
-            } else {
-                pi[q] = 0;
-            }
+            // Step 2
+            if ((P[i - 1].equals(P[CO[i - 1]]) && (CO[CO[i - 1]] == -1)))
+                CO[i - 1] = -1;
+            // Step 3
+            if ((P[i - 1].equals(P[CO[i - 1]]) && (CO[CO[i - 1]] != -1)))
+                CO[i - 1] = CO[CO[i - 1]];
         }
-        return pi;
+        return CO;
     }
 }

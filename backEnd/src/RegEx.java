@@ -33,10 +33,14 @@ public class RegEx {
   // MAIN
   public static void main(String[] args) {
     try {
-      Test.runTests("ProjetDaar_RegEx/backEnd/Store/tests", "ProjetDaar_RegEx/backEnd/Store/texts",
+      Test.runTests(
+          "ProjetDaar_RegEx/backEnd/Store/tests",
+          "ProjetDaar_RegEx/backEnd/Store/texts",
           "ProjetDaar_RegEx/backEnd/Store/tests_results");
     } catch (Exception e) {
-      System.out.println("Echec losr de la réalisation des tests");
+      System.err.println("Échec lors de la réalisation des tests : "
+          + (e.getMessage() != null ? e.getMessage() : e.getClass().getName()));
+      e.printStackTrace();
     }
   }
 
