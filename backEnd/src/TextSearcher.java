@@ -9,16 +9,30 @@ public class TextSearcher {
     // Read the text and search on each line specific character combinations based
     // on the given DFA.
     public static List<String> searchText(String filePath, DFA dfa) throws IOException {
-        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-            String line;
-            List<String> res = new ArrayList<>();
-            while ((line = br.readLine()) != null) {
-                Character[] chars = toCharacterArray(line);
-                if (dfa.matches(chars)) {
-                    res.add(line);
+        List<String> res = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            StringBuilder currentLine = new StringBuilder();
+            int ch;
+            while ((ch = reader.read()) != -1) {
+                if (ch == '\n') {
+                    evaluateLine(dfa, res, currentLine);
+                    currentLine.setLength(0);
+                } else {
+                    currentLine.append((char) ch);
                 }
             }
-            return res;
+            if (currentLine.length() > 0) {
+                evaluateLine(dfa, res, currentLine);
+            }
+        }
+        return res;
+    }
+
+    private static void evaluateLine(DFA dfa, List<String> results, StringBuilder buffer) {
+        String rawLine = buffer.toString();
+        Character[] chars = toCharacterArray(rawLine);
+        if (dfa.matches(chars)) {
+            results.add(rawLine.replace("\r", ""));
         }
     }
 
