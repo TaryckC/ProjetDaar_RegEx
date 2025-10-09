@@ -14,7 +14,7 @@ public class TextSearcher {
             List<String> res = new ArrayList<>();
             while ((line = br.readLine()) != null) {
                 Character[] chars = toCharacterArray(line);
-                if (dfa.validateString(chars)[1] != -1) {
+                if (dfa.matches(chars)) {
                     res.add(line);
                 }
             }

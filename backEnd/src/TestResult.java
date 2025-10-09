@@ -25,9 +25,9 @@ public class TestResult {
         return "{"
                 + "\"method\":\"" + method + "\","
                 + "\"pattern\":\"" + pattern + "\","
-                + "\"result\":" + result.toString() + ","
+                // "\"result\":" + result.toString() + ","
                 + "\"resultSize\":" + result.size() + ","
-                + "\"time\":" + time
+                + "\"time\":" + time / 1000000 // Nanosec to ms
                 + "}";
     }
 }

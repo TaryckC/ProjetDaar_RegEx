@@ -221,6 +221,20 @@ public class DFA {
         return res;
     }
 
+    public boolean matches(Character[] characters) {
+        if (!validateDFAFortextMatching()) {
+            return false;
+        }
+        if (start != null && start.isAccept) {
+            return true;
+        }
+        int[] result = exploreFrom(characters, start, 0);
+        if (result[1] != -1) {
+            return true;
+        }
+        return false;
+    }
+
     public int[] exploreFrom(Character[] characters, DfaState startNode, int startIndex) {
         int[] res = new int[2];
         int matchStart = startIndex;
