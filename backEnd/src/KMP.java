@@ -6,8 +6,8 @@ import java.util.List;
 
 public class KMP {
 
-    // KMP wikipedia :
-    // https://fr.wikipedia.org/wiki/Algorithme_de_Knuth-Morris-Pratt
+    // KMP :
+    // Runs the KMP search for pattern P across every line of the target file.
     public static List<String> searchPhase(Character[] P, String filePath) throws IOException {
         if (P == null)
             throw new IllegalArgumentException("pattern must not be null");
@@ -28,10 +28,6 @@ public class KMP {
                         i++;
                         if (q == P.length) {
                             res.add(line);
-                            q = co[q - 1];
-                            if (q < 0) {
-                                q = 0;
-                            }
                             break;
                         }
                     } else {
@@ -60,6 +56,7 @@ public class KMP {
         }
     }
 
+    // Builds the failure table used during the KMP scan.
     private static int[] computeCO(Character[] P) {
         int[] CO = new int[P.length];
         CO[0] = -1;
@@ -70,7 +67,6 @@ public class KMP {
                 if (P[i - 1].equals(P[j]))
                     prefixeLengthCounter = prefixeLengthCounter + 1;
                 else {
-                    prefixeLengthCounter = 0;
                     break;
                 }
             }

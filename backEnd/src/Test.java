@@ -17,6 +17,8 @@ public class Test {
     // The test folder must contain the following files :
     // - pattern_regex.txt
     // - pattern_words.txt
+    @SuppressWarnings("CallToPrintStackTrace")
+    // Orchestrates the benchmark pipeline across regex and literal test suites.
     public static void runTests(String path_to_test_folder, String path_to_texts, String path_to_results_writing)
             throws IOException {
         String regexFile = path_to_test_folder + "/pattern_regex.txt";
@@ -87,6 +89,7 @@ public class Test {
         }
     }
 
+    // Lists all .txt files under the supplied folder.
     private static List<String> collectTextFiles(Path folder) throws IOException {
         try (var stream = Files.list(folder)) {
             return stream.filter(Files::isRegularFile)
@@ -97,6 +100,7 @@ public class Test {
         }
     }
 
+    // Runs KMP, DFA, and egrep comparisons for every pattern/file combination.
     private static List<TestResult> runComparisonTest(String path_to_test, String path_to_texts, boolean containsRegex)
             throws Exception {
         try (BufferedReader br = new BufferedReader(new FileReader(path_to_test))) {
@@ -149,6 +153,7 @@ public class Test {
         }
     }
 
+    // Executes egrep (or its fallback) to collect matching lines for a pattern.
     private static List<String> runEgrep(String pattern, String filePath) throws IOException {
         ProcessBuilder pb = new ProcessBuilder("egrep", pattern, filePath);
         pb.redirectErrorStream(true);
@@ -187,6 +192,7 @@ public class Test {
         return egrepResult;
     }
 
+    // Reproduces egrep matching using Java's regex engine when needed.
     private static List<String> emulateEgrep(String pattern, String filePath) throws IOException {
         Pattern javaPattern;
         try {

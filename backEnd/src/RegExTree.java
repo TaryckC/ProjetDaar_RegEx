@@ -4,6 +4,7 @@ public class RegExTree {
   protected int root;
   protected ArrayList<RegExTree> subTrees;
 
+  // Stores a regex AST node with its operator code and children.
   public RegExTree(int root, ArrayList<RegExTree> subTrees) {
     this.root = root;
     this.subTrees = subTrees;

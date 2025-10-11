@@ -11,7 +11,8 @@ public class DFA {
     public Set<DfaState> states = new HashSet<>();
     public Map<DfaState, Map<Character, DfaState>> trans = new HashMap<>();
 
-    // Implémentation à partir de : https://en.wikipedia.org/wiki/DFA_minimization
+    // Implementation derived from https://en.wikipedia.org/wiki/DFA_minimization
+    // Removes states that cannot be reached from the start.
     private void removeUnreachableStates() {
         if (start == null)
             return;
@@ -49,7 +50,8 @@ public class DFA {
         }
     }
 
-    // Hopcroft's algorithm :
+    // Hopcroft's algorithm:
+    // Splits state partitions until only distinguishable classes remain.
     private List<Set<DfaState>> mergingNondistinguishableStates() {
         Set<DfaState> nonFinals = new HashSet<>(states);
         Set<DfaState> finals = new HashSet<>(nonFinals);
@@ -102,6 +104,7 @@ public class DFA {
         return P;
     }
 
+    // Collects states whose outgoing transition on c targets the given subset.
     private Set<DfaState> getCharTransitionTowardsSubset(Character c, Set<DfaState> subSet) {
         Set<DfaState> res = new HashSet<>();
         for (DfaState state : states) {
@@ -117,6 +120,7 @@ public class DFA {
         return res;
     }
 
+    // Builds a minimized DFA by merging equivalent states from the input DFA.
     public static DFA updateDFA(DFA dfa) {
         DFA res = new DFA();
         dfa.removeUnreachableStates();
@@ -182,6 +186,7 @@ public class DFA {
         return res;
     }
 
+    // Dumps the DFA components to stdout for debugging.
     public void printDFA() {
         System.out.println("Alphabet: " + alphabet);
         System.out.println("Start state: " + (start != null ? start.id : "null"));
@@ -201,10 +206,10 @@ public class DFA {
         }
     }
 
-    // TODO : We should've created a new Class for minimized DFA.
     // Check if a DFA can accept text (Has a start, Has at least a final state, can
     // transition from start to final state)
     // Precondition : the dfa is minimized (there is no unreachable state)
+    // Validates that the minimized DFA is suitable for text matching.
     public boolean validateDFAFortextMatching() {
         if (start == null)
             return false;
@@ -214,6 +219,7 @@ public class DFA {
 
     // Returns an array where the first element represent the start of the validated
     // word end the second element the end of the word
+    // Locates the first substring accepted by the DFA and returns its bounds.
     public int[] validateString(Character[] characters) {
         if (!validateDFAFortextMatching())
             return new int[] { 0, -1 }; // No match found
@@ -221,6 +227,7 @@ public class DFA {
         return res;
     }
 
+    // Reports whether the DFA accepts the provided character array.
     public boolean matches(Character[] characters) {
         if (!validateDFAFortextMatching()) {
             return false;
@@ -229,12 +236,10 @@ public class DFA {
             return true;
         }
         int[] result = exploreFrom(characters, start, 0);
-        if (result[1] != -1) {
-            return true;
-        }
-        return false;
+        return result[1] != -1;
     }
 
+    // Incrementally traverses transitions from the given index to find an accepting run.
     public int[] exploreFrom(Character[] characters, DfaState startNode, int startIndex) {
         int[] res = new int[2];
         int matchStart = startIndex;

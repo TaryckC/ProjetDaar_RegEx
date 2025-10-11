@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,23 +28,28 @@ public class RegEx {
   private static String regEx;
 
   // CONSTRUCTOR
+  // Provides a utility wrapper without immediate initialization.
   public RegEx() {
   }
 
   // MAIN
+  @SuppressWarnings("CallToPrintStackTrace")
+  // Launches the predefined test campaign from the command line.
   public static void main(String[] args) {
     try {
       Test.runTests(
           "ProjetDaar_RegEx/backEnd/Store/tests",
           "ProjetDaar_RegEx/backEnd/Store/texts",
           "ProjetDaar_RegEx/backEnd/Store/tests_results");
-    } catch (Exception e) {
+    } catch (IOException e) {
       System.err.println("Échec lors de la réalisation des tests : "
           + (e.getMessage() != null ? e.getMessage() : e.getClass().getName()));
       e.printStackTrace();
     }
   }
 
+  @SuppressWarnings("unused")
+  // Executes a small suite of in-memory regex validation scenarios.
   private static void runTests() {
     System.out.println("Launching DFA validation tests...\n");
     List<RegexTestCase> tests = new ArrayList<>();
@@ -78,6 +84,7 @@ public class RegEx {
     System.out.println("\nTest summary: " + passed + "/" + tests.size() + " passed.");
   }
 
+  // Parses the pattern, builds a minimized DFA, and evaluates it on the input.
   private static int[] evaluatePattern(String pattern, String input) throws Exception {
     counter = 0;
     regEx = pattern;
@@ -103,6 +110,7 @@ public class RegEx {
     return DFA.updateDFA(dfa);
   }
 
+  // Converts a string into a boxed character array for DFA consumption.
   private static Character[] toCharacterArray(String input) {
     Character[] array = new Character[input.length()];
     for (int i = 0; i < input.length(); i++) {
@@ -119,6 +127,7 @@ public class RegEx {
     final int expectedStart;
     final int expectedEnd;
 
+    // Describes a single expectation for the regex evaluation suite.
     RegexTestCase(String name, String pattern, String input, boolean shouldMatch,
         int expectedStart, int expectedEnd) {
       this.name = name;
@@ -130,6 +139,7 @@ public class RegEx {
     }
   }
 
+  // Emits the NFA transition graph in a readable format.
   public static void printNFA(NFA nfa) {
     Set<State> visited = new HashSet<>();
     Queue<State> queue = new LinkedList<>();
@@ -139,7 +149,7 @@ public class RegEx {
     System.out.println("NFA transitions:");
     while (!queue.isEmpty()) {
       State s = queue.poll();
-      // Transitions symboliques
+      // Symbol transitions
       for (Map.Entry<Character, List<State>> e : s.transitions.entrySet()) {
         for (State target : e.getValue()) {
           System.out.println("  " + s.id + " --" + e.getKey() + "--> " + target.id);
@@ -156,6 +166,7 @@ public class RegEx {
     }
   }
 
+  // Applies Thompson's construction to convert the syntax tree into an NFA.
   private static NFA toNFA(RegExTree tree) {
     if (tree.subTrees.isEmpty()) {
       State s = new State(counter++, false);
@@ -198,6 +209,7 @@ public class RegEx {
   }
 
   // FROM REGEX TO SYNTAX TREE
+  // Produces a syntax tree from the raw regex string.
   private static RegExTree parse() throws Exception {
 
     ArrayList<RegExTree> result = new ArrayList<>();
@@ -207,6 +219,7 @@ public class RegEx {
     return parse(result);
   }
 
+  // Maps literal characters and operators to their internal codes.
   private static int charToRoot(char c) {
     if (c == '.')
       return DOT;
@@ -221,6 +234,7 @@ public class RegEx {
     return (int) c;
   }
 
+  // Resolves operator precedence and parenthesis to build the final tree.
   private static RegExTree parse(ArrayList<RegExTree> result) throws Exception {
     while (containParenthese(result))
       result = processParenthese(result);
@@ -237,6 +251,7 @@ public class RegEx {
     return removeProtection(result.get(0));
   }
 
+  // Checks whether the token list still contains parentheses markers.
   private static boolean containParenthese(ArrayList<RegExTree> trees) {
     for (RegExTree t : trees)
       if (t.root == PARENTHESEFERMANT || t.root == PARENTHESEOUVRANT)
@@ -244,6 +259,7 @@ public class RegEx {
     return false;
   }
 
+  // Collapses the innermost parenthesized segment into a protected subtree.
   private static ArrayList<RegExTree> processParenthese(ArrayList<RegExTree> trees) throws Exception {
     ArrayList<RegExTree> result = new ArrayList<>();
     boolean found = false;
@@ -272,6 +288,7 @@ public class RegEx {
     return result;
   }
 
+  // Detects pending Kleene star operators awaiting attachment.
   private static boolean containEtoile(ArrayList<RegExTree> trees) {
     for (RegExTree t : trees)
       if (t.root == ETOILE && t.subTrees.isEmpty())
@@ -279,6 +296,7 @@ public class RegEx {
     return false;
   }
 
+  // Attaches standalone Kleene stars to their immediate left operand.
   private static ArrayList<RegExTree> processEtoile(ArrayList<RegExTree> trees) throws Exception {
     ArrayList<RegExTree> result = new ArrayList<>();
     boolean found = false;
@@ -298,6 +316,7 @@ public class RegEx {
     return result;
   }
 
+  // Identifies implicit concatenations yet to be resolved.
   private static boolean containConcat(ArrayList<RegExTree> trees) {
     boolean firstFound = false;
     for (RegExTree t : trees) {
@@ -314,6 +333,7 @@ public class RegEx {
     return false;
   }
 
+  // Groups adjacent operands into concatenation nodes.
   private static ArrayList<RegExTree> processConcat(ArrayList<RegExTree> trees) throws Exception {
     ArrayList<RegExTree> result = new ArrayList<>();
     boolean found = false;
@@ -343,6 +363,7 @@ public class RegEx {
     return result;
   }
 
+  // Looks for pending alternation operators.
   private static boolean containAltern(ArrayList<RegExTree> trees) {
     for (RegExTree t : trees)
       if (t.root == ALTERN && t.subTrees.isEmpty())
@@ -350,6 +371,7 @@ public class RegEx {
     return false;
   }
 
+  // Builds alternation nodes from left and right operands.
   private static ArrayList<RegExTree> processAltern(ArrayList<RegExTree> trees) throws Exception {
     ArrayList<RegExTree> result = new ArrayList<>();
     boolean found = false;
@@ -378,6 +400,7 @@ public class RegEx {
     return result;
   }
 
+  // Removes protection markers inserted during parsing.
   private static RegExTree removeProtection(RegExTree tree) throws Exception {
     if (tree.root == PROTECTION && tree.subTrees.size() != 1)
       throw new Exception();
@@ -394,6 +417,8 @@ public class RegEx {
 
   // EXAMPLE
   // --> RegEx from Aho-Ullman book Chap.10 Example 10.25
+  @SuppressWarnings("unused")
+  // Provides a sample syntax tree used for illustration.
   private static RegExTree exampleAhoUllman() {
     RegExTree a = new RegExTree((int) 'a', new ArrayList<>());
     RegExTree b = new RegExTree((int) 'b', new ArrayList<>());
@@ -411,6 +436,7 @@ public class RegEx {
     return new RegExTree(ALTERN, subTrees);
   }
 
+  // Computes the epsilon-closure of the provided NFA state set.
   private static Set<State> epsilonClosure(Set<State> S) {
     Set<State> closure = new HashSet<>(S); // inclure S dès le départ
     Deque<State> stack = new ArrayDeque<>(S); // pile/queue de travail
@@ -428,6 +454,7 @@ public class RegEx {
     return closure;
   }
 
+  // Returns all states reachable from S via the given symbol.
   public static Set<State> move(Set<State> S, char c) {
     Set<State> result = new HashSet<>();
     for (State s : S) {
@@ -439,6 +466,7 @@ public class RegEx {
     return result;
   }
 
+  // Gathers the outgoing symbols present on transitions from S.
   public static Set<Character> symbolsFrom(Set<State> S) {
     // retourne l’union des clés S_i.transitions.keySet() pour tous les états S_i ∈
     // S
@@ -449,6 +477,7 @@ public class RegEx {
     return sCharacters;
   }
 
+  // Builds a stable key string representing a set of states.
   public static String keyOf(Set<State> set) {
     if (set == null || set.isEmpty())
       return "Ø"; // clé pour l’ensemble vide
@@ -465,6 +494,7 @@ public class RegEx {
     return sb.toString(); // ex: "0,2,5"
   }
 
+  // Applies the subset construction to convert an NFA into a DFA.
   public static DFA determinize(NFA nfa) {
     DFA dfa = new DFA();
     Map<String, DfaState> registre = new HashMap<>();

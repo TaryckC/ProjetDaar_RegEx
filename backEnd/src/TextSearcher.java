@@ -8,6 +8,7 @@ public class TextSearcher {
 
     // Read the text and search on each line specific character combinations based
     // on the given DFA.
+    // Streams the file and returns lines accepted by the DFA matcher.
     public static List<String> searchText(String filePath, DFA dfa) throws IOException {
         List<String> res = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
@@ -28,6 +29,7 @@ public class TextSearcher {
         return res;
     }
 
+    // Evaluates a buffered line and records it when accepted.
     private static void evaluateLine(DFA dfa, List<String> results, StringBuilder buffer) {
         String rawLine = buffer.toString();
         Character[] chars = toCharacterArray(rawLine);
@@ -36,6 +38,7 @@ public class TextSearcher {
         }
     }
 
+    // Converts the line into boxed characters for DFA traversal.
     private static Character[] toCharacterArray(String s) {
         Character[] arr = new Character[s.length()];
         for (int i = 0; i < s.length(); i++) {

@@ -5,9 +5,10 @@ import java.util.Set;
 
 public class DfaState {
     public int id;
-    public Set<State> nfaSet; // l’ensemble d’états NFA
+    public Set<State> nfaSet; // NFA states
     public boolean isAccept;
 
+    // Encapsulates a DFA state built from a set of NFA states.
     public DfaState(int id, Set<State> nfaSet, boolean isAccept) {
         this.id = id;
         this.nfaSet = nfaSet;
@@ -15,6 +16,7 @@ public class DfaState {
     }
 
     @Override
+    // Provides a readable snapshot of the DFA state composition.
     public String toString() {
         List<Integer> ids = new ArrayList<>();
         if (nfaSet != null) {
